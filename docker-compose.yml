@@ -44,5 +44,14 @@ services:
       - db
       - neo4j
 
+  frontend:
+    build: ./frontend
+    container_name: itmo_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   neo4j_data:

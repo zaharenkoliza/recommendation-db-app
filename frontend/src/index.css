@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+
+@theme {
+  --color-primary: #1846C7; /* Blue from parent */
+  --color-text-main: #333333;
+  --color-text-muted: #5C5C5C;
+  --color-bg-light: #F5F5F5;
+  --color-border: #E7E7E7;
+  --font-sans: 'Open Sans', sans-serif;
+  --font-display: 'Open Sans', sans-serif;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  color: #333333;
+  background-color: #FFFFFF;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  padding-top: 10px;
+  margin-bottom: 40px;
+}
+
+h2, h3, h4 {
+  margin: 0;
+  font-weight: 600;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s ease-in-out;
+}
+
+a:hover {
+  color: #1846C7;
+}
+
+/* Card Styles matching light theme */
+.light-card {
+  background: white;
+  border: 1px solid #E7E7E7;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.light-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #1846C7;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #f0f4ff;
+  color: #1846C7;
+}
