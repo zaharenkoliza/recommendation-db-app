@@ -1,13 +1,18 @@
 export interface Student {
   id: number;
   name: string;
-  group_id?: number;
+  group_id?: string;
+  track?: string;
+  status?: string;
 }
 
 export interface RecommendedDiscipline {
   id: number;
   name: string;
   prerequisite_count: number;
+  prerequisite_names?: string[];
+  reason?: string;
+  is_debt?: boolean;
 }
 
 export interface RecommendationResponse {
@@ -24,4 +29,39 @@ export interface Discipline {
 export interface TrackDisciplinesResponse {
   track: string;
   disciplines: Discipline[];
+}
+
+export interface ProgressEntry {
+  id: number;
+  discipline_name: string;
+  grade: number | null;
+  status: 'Passed' | 'Failed' | 'Enrolled';
+  attempt_number: number;
+  updated_at: string | null;
+}
+
+export interface ProgressResponse {
+  student_id: number;
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    enrolled: number;
+  };
+  passed: ProgressEntry[];
+  failed: ProgressEntry[];
+  enrolled: ProgressEntry[];
+}
+
+export interface User {
+  id: number;
+  login: string;
+  role: 'ADMIN' | 'STUDENT';
+  student_id: number | null;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
 }

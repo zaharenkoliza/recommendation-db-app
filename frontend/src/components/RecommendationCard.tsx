@@ -9,14 +9,16 @@ interface Props {
 
 export const RecommendationCard: React.FC<Props> = ({ discipline }) => {
   return (
-    <div className="light-card flex flex-col h-full gap-4 relative overflow-hidden group">
+    <div className={`light-card flex flex-col h-full gap-4 relative overflow-hidden group ${discipline.is_debt ? 'bg-red-50/50' : ''}`}>
       <div className="flex items-start justify-between">
-        <div className="p-2 bg-[#f0f4ff] rounded text-[#1846C7]">
+        <div className={`p-2 rounded ${discipline.is_debt ? 'bg-red-100 text-red-600' : 'bg-[#f0f4ff] text-[#1846C7]'}`}>
           <BookOpen size={20} />
         </div>
-        <div className="flex items-center gap-1.5 bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+          discipline.is_debt ? 'bg-red-200 text-red-700' : 'bg-[#E8F5E9] text-[#2E7D32]'
+        }`}>
           <CheckCircle2 size={12} strokeWidth={2} />
-          Target
+          {discipline.is_debt ? 'Debt' : 'Target'}
         </div>
       </div>
 
@@ -50,10 +52,19 @@ export const RecommendationCard: React.FC<Props> = ({ discipline }) => {
           </div>
         </div>
         
-        <button className="p-2 rounded bg-[#f5f5f5] hover:bg-[#e0e0e0] text-[#5C5C5C] transition-colors" title="Заблокировано / Требует выполнения условий">
-           <Lock size={16} />
+        <button className="p-2 rounded bg-[#f5f5f5] hover:bg-[#e0e0e0] text-[#5C5C5C] transition-colors" title="Доступно для записи">
+           <Lock size={16} className="opacity-0 hidden" />
+           <CheckCircle2 size={16} className="text-[#2E7D32]" />
         </button>
       </div>
+
+      {discipline.reason && (
+        <div className={`mt-2 text-xs p-2 rounded border ${
+          discipline.is_debt ? 'bg-red-100/50 text-red-700 border-red-200' : 'bg-[#f9f9f9] text-[#5C5C5C] border-[#E7E7E7]'
+        }`}>
+          <strong>Почему рекомендовано:</strong> {discipline.reason}
+        </div>
+      )}
     </div>
   );
 };

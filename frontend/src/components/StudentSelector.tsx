@@ -69,7 +69,10 @@ export const StudentSelector: React.FC<Props> = ({ onSelect }) => {
                   className="px-4 py-3 hover:bg-[#f0f4ff] rounded cursor-pointer transition-colors flex items-center justify-between group"
                 >
                   <span className="font-medium text-[#333] group-hover:text-[#1846C7]">{student.name}</span>
-                  <span className="text-xs text-[#5C5C5C]">ID: {student.id}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-[#5C5C5C]">ИСУ: {student.id}</span>
+                    {student.track && <span className="text-[10px] text-[#1846C7] opacity-70">{student.track}</span>}
+                  </div>
                 </div>
               ))
             ) : (
