@@ -10405,3 +10405,20 @@ ALTER TABLE ONLY s335141.students
 
 
 --
+-- ADDED FOR PORTAL INTEGRATION
+--
+
+CREATE TABLE s335141.discipline_prerequisites (
+    discipline_id integer NOT NULL,
+    prerequisite_id integer NOT NULL,
+    CONSTRAINT discipline_prerequisites_pkey PRIMARY KEY (discipline_id, prerequisite_id),
+    CONSTRAINT fk_dp_discipline FOREIGN KEY (discipline_id) REFERENCES s335141.disciplines(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_dp_prerequisite FOREIGN KEY (prerequisite_id) REFERENCES s335141.disciplines(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+ALTER TABLE s335141.discipline_prerequisites OWNER TO s335141;
+
+ALTER TABLE s335141.appuser ADD COLUMN student_id integer;
+ALTER TABLE s335141.appuser ADD CONSTRAINT fk_appuser_student FOREIGN KEY (student_id) REFERENCES s335141.students(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+INSERT INTO s335141.appuser (id, login, password, role, student_id) VALUES (1, 'admin', 'admin', 'ADMIN', NULL);
+INSERT INTO s335141.appuser (id, login, password, role, student_id) VALUES (2, 'student', 'student', 'STUDENT', 1);

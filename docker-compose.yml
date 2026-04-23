@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: rootpassword
       POSTGRES_DB: itmo_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
@@ -45,11 +45,16 @@ services:
       - neo4j
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      target: dev
     container_name: itmo_frontend
     restart: always
     ports:
-      - "3000:80"
+      - "3000:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
 

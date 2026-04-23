@@ -5,3 +5,5 @@ neo4j
 python-dotenv
 pydantic
 pydantic-settings
+PyJWT
+passlib[bcrypt]

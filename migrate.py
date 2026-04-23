@@ -28,7 +28,8 @@ def migrate():
     
     # New tables
     prereqs = run_psql("SELECT discipline_id, prerequisite_id FROM s335141.discipline_prerequisites")
-    progress = run_psql("SELECT student_id, discipline_id FROM s335141.student_progress WHERE is_completed = true")
+    progress = run_psql("SELECT student_id, discipline_id FROM s335141.student_performance WHERE status = 'Passed'")
+    debts = run_psql("SELECT student_id, discipline_id FROM s335141.student_performance WHERE status = 'Failed'")
 
     driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
     with driver.session() as session:
@@ -51,9 +52,10 @@ def migrate():
         
         session.run("MATCH (t:Track)-[:HAS_MODULE]->(m:Module)<-[:PART_OF]-(d:Discipline) MERGE (t)-[:INCLUDES]->(d)")
 
-        print("Syncing prerequisites and progress...")
+        print("Syncing prerequisites, progress and debts...")
         session.run("UNWIND $data AS row MATCH (d:Discipline {id: row.discipline_id}), (p:Discipline {id: row.prerequisite_id}) MERGE (d)-[:REQUIRES]->(p)", data=prereqs)
         session.run("UNWIND $data AS row MATCH (s:Student {id: row.student_id}), (d:Discipline {id: row.discipline_id}) MERGE (s)-[:COMPLETED]->(d)", data=progress)
+        session.run("UNWIND $data AS row MATCH (s:Student {id: row.student_id}), (d:Discipline {id: row.discipline_id}) MERGE (s)-[:HAS_DEBT]->(d)", data=debts)
 
     driver.close()
     print("Migration complete!")
