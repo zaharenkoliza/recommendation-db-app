@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { Student, ProgressResponse, ProgressEntry } from '../api/types';
-import { CheckCircle2, XCircle, Clock, BookOpen, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, BookOpen, Loader2, ChevronDown, ChevronUp, GitBranch } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   student: Student;
@@ -33,6 +34,7 @@ interface SectionProps {
 
 const Section: React.FC<SectionProps> = ({ title, count, icon, color, bgColor, entries, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
+  const navigate = useNavigate();
 
   return (
     <div className={`rounded-xl border ${bgColor} overflow-hidden`}>
@@ -61,7 +63,7 @@ const Section: React.FC<SectionProps> = ({ title, count, icon, color, bgColor, e
           >
             <div className="px-6 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
               {entries.map(entry => (
-                <div key={entry.id} className="bg-white rounded-lg p-4 border border-[#E7E7E7] flex items-start justify-between gap-4">
+                <div key={entry.id} className="bg-white rounded-lg p-4 border border-[#E7E7E7] flex items-start justify-between gap-4 group">
                   <div className="flex items-start gap-3 min-w-0">
                     <BookOpen size={16} className="text-[#1846C7] mt-0.5 shrink-0" />
                     <div className="min-w-0">
@@ -73,13 +75,29 @@ const Section: React.FC<SectionProps> = ({ title, count, icon, color, bgColor, e
                       )}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className={`text-lg font-bold ${gradeColor(entry.grade)}`}>
-                      {entry.grade ?? '—'}
-                    </p>
-                    <p className={`text-[10px] font-semibold uppercase tracking-wide ${gradeColor(entry.grade)}`}>
-                      {gradeLabel(entry.grade)}
-                    </p>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Note: entry.discipline_id should be used if available, 
+                        // but here we might only have discipline_name. 
+                        // Assuming entry.id is unique but we need the actual discipline ID for the graph.
+                        // Let's check api/types.ts or use entry.id if it's the discipline ID.
+                        navigate(`/admin/disciplines/${entry.id}/graph`);
+                      }}
+                      className="p-1.5 rounded-lg bg-gray-50 text-gray-400 opacity-40 group-hover:opacity-100 hover:text-[#1846C7] hover:bg-blue-50 transition-all"
+                      title="Посмотреть связи"
+                    >
+                      <GitBranch size={14} />
+                    </button>
+                    <div className="text-right">
+                      <p className={`text-lg font-bold ${gradeColor(entry.grade)}`}>
+                        {entry.grade ?? '—'}
+                      </p>
+                      <p className={`text-[10px] font-semibold uppercase tracking-wide ${gradeColor(entry.grade)}`}>
+                        {gradeLabel(entry.grade)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

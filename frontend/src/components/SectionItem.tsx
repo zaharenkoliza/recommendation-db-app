@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, BookOpen, GraduationCap } from 'lucide-react';
+import { ChevronDown, ChevronRight, BookOpen, GitBranch } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface SectionProps {
   section: any;
@@ -8,6 +9,7 @@ interface SectionProps {
 }
 
 export const SectionItem: React.FC<SectionProps> = ({ section, depth = 0 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const childrenCount = (section.children?.length || 0) + (section.disciplines?.length || 0);
   const hasChildren = childrenCount > 0;
@@ -61,17 +63,27 @@ export const SectionItem: React.FC<SectionProps> = ({ section, depth = 0 }) => {
 
               {/* Render Disciplines */}
               {section.disciplines?.map((disc: any) => (
-                <div 
-                  key={disc.id} 
-                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/50 mb-2 transition-colors hover:bg-white hover:border-blue-100"
-                  style={{ marginLeft: (depth + 1) * 20 + 24 }}
-                >
-                  <BookOpen size={14} className="text-gray-400" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#444] truncate">{disc.name}</p>
-                    <p className="text-[10px] text-[#888]">RPD ID: {disc.id}</p>
+                  <div 
+                    key={disc.id} 
+                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/50 mb-2 transition-all hover:bg-white hover:border-blue-200 hover:shadow-md group"
+                    style={{ marginLeft: (depth + 1) * 20 + 24 }}
+                  >
+                    <BookOpen size={14} className="text-gray-400 group-hover:text-[#1846C7] transition-colors" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#444] truncate group-hover:text-[#1f1f1f]">{disc.name}</p>
+                      <p className="text-[10px] text-[#888]">RPD ID: {disc.id}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/admin/disciplines/${disc.id}/graph`);
+                      }}
+                      className="p-1.5 rounded-lg bg-white border border-gray-100 text-gray-400 opacity-40 group-hover:opacity-100 hover:text-[#1846C7] hover:border-blue-200 transition-all shadow-sm"
+                      title="Посмотреть связи"
+                    >
+                      <GitBranch size={12} />
+                    </button>
                   </div>
-                </div>
               ))}
               
               {hasChildren && section.children?.length === 0 && section.disciplines?.length === 0 && (

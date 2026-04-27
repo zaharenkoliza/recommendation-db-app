@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { User } from '../api/types';
 
 interface AuthContextType {
@@ -8,29 +8,56 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isInitializing: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return null; }
+    }
+    return null;
+  });
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    // Basic init from localStorage
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (savedToken && savedUser) {
-      try {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('Failed to parse user from local storage');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    // Initial check is now done in useState, but we still need to listen for events
+    const syncAuth = () => {
+      const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      setToken(savedToken);
+      if (savedUser) {
+        try { setUser(JSON.parse(savedUser)); } catch { setUser(null); }
+      } else {
+        setUser(null);
       }
-    }
+      setIsInitializing(false);
+    };
+
+    syncAuth();
+
+    // Listen for storage changes (e.g. from interceptor or other tabs)
+
+    // Listen for storage changes (e.g. from interceptor or other tabs)
+    window.addEventListener('storage', () => {
+      console.log('[AuthContext] Storage event detected');
+      syncAuth();
+    });
+    // Custom event for same-tab changes
+    window.addEventListener('auth-change', () => {
+      console.log('[AuthContext] auth-change event detected');
+      syncAuth();
+    });
+
+
+    return () => {
+      window.removeEventListener('storage', syncAuth);
+      window.removeEventListener('auth-change', syncAuth);
+    };
   }, []);
 
   const login = (newUser: User, newToken: string) => {
@@ -38,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(newToken);
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
+    window.dispatchEvent(new Event('auth-change'));
   };
 
   const logout = () => {
@@ -45,7 +73,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    window.dispatchEvent(new Event('auth-change'));
   };
+
 
   return (
     <AuthContext.Provider value={{
@@ -54,7 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       login,
       logout,
       isAuthenticated: !!token,
-      isAdmin: user?.role?.toUpperCase() === 'ADMIN'
+      isAdmin: user?.role?.toUpperCase() === 'ADMIN',
+      isInitializing
     }}>
       {children}
     </AuthContext.Provider>

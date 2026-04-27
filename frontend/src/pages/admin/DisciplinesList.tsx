@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
-import { Loader2, AlertCircle, Search, BookOpen } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Loader2, AlertCircle, Search, BookOpen, Pencil, GitBranch } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DisciplineForm } from './DisciplineForm';
+import { useNavigate } from 'react-router-dom';
 
 export const DisciplinesList = () => {
+  const navigate = useNavigate();
   const [disciplines, setDisciplines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingItem, setEditingItem] = useState<any>(null);
 
-  useEffect(() => {
+  const loadData = () => {
     api.getDisciplines()
       .then(data => {
         setDisciplines(data);
@@ -20,7 +24,9 @@ export const DisciplinesList = () => {
         setLoading(false);
         console.error(err);
       });
-  }, []);
+  };
+
+  useEffect(() => { loadData(); }, []);
 
   const filtered = disciplines.filter(d =>
     d.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -78,14 +84,31 @@ export const DisciplinesList = () => {
             key={d.id}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.02, 0.5) }}
-            className="light-card hover:border-[#1846C7] transition-colors cursor-default"
+            transition={{ delay: Math.min(i * 0.01, 0.3) }}
+            className="light-card hover:border-[#1846C7] transition-colors cursor-default group relative"
           >
+            <div className="absolute top-3 right-3 flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-all">
+              <button
+                onClick={() => navigate(`/admin/disciplines/${d.id}/graph`)}
+                className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:text-[#1846C7] hover:bg-blue-50 transition-all"
+                title="Посмотреть связи (пререквизиты)"
+              >
+                <GitBranch size={14} />
+              </button>
+              <button
+                onClick={() => setEditingItem(d)}
+                className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:text-[#1846C7] hover:bg-blue-50 transition-all"
+                title="Редактировать"
+              >
+                <Pencil size={14} />
+              </button>
+            </div>
+
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded bg-blue-50 flex-shrink-0 flex items-center justify-center text-[#1846C7] font-mono text-xs font-bold mt-0.5">
                 {d.id}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-6">
                 <p className="font-medium text-[#333] leading-snug">{d.name}</p>
                 {d.comment && (
                   <p className="text-xs text-[#5C5C5C] mt-1 line-clamp-2">{d.comment}</p>
@@ -102,6 +125,17 @@ export const DisciplinesList = () => {
           <p>Дисциплины не найдены</p>
         </div>
       )}
+
+      {/* Modal */}
+      <AnimatePresence>
+        {editingItem && (
+          <DisciplineForm
+            discipline={editingItem}
+            onClose={() => setEditingItem(null)}
+            onSaved={() => { setEditingItem(null); loadData(); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

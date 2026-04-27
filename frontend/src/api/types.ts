@@ -4,6 +4,8 @@ export interface Student {
   group_id?: string;
   track?: string;
   status?: string;
+  curriculum?: string;
+  course?: number;
 }
 
 export interface RecommendedDiscipline {
@@ -15,9 +17,16 @@ export interface RecommendedDiscipline {
   is_debt?: boolean;
 }
 
+export interface ElectiveGroup {
+  module_name: string;
+  disciplines: RecommendedDiscipline[];
+}
+
 export interface RecommendationResponse {
   student_id: number;
-  recommended_disciplines: RecommendedDiscipline[];
+  next_semester: number;
+  mandatory: RecommendedDiscipline[];
+  elective_groups: ElectiveGroup[];
 }
 
 export interface Discipline {

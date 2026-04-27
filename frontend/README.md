@@ -1,73 +1,39 @@
-# React + TypeScript + Vite
+# SmartRec Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Это клиентская часть системы ITMO SmartRec, отвечающая за отображение образовательных траекторий, графов пререквизитов и интеллектуальных рекомендаций для студентов.
 
-Currently, two official plugins are available:
+## 🛠 Технологии
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+*   **Фреймворк:** React 19 + TypeScript
+*   **Сборщик:** Vite
+*   **Стилизация:** Tailwind CSS + PostCSS
+*   **Маршрутизация:** React Router v7
+*   **Иконки:** Lucide React
+*   **Запросы к API:** Axios
 
-## React Compiler
+## 🚀 Локальный запуск
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Убедитесь, что у вас установлен Node.js (рекомендуется v18+).
+2. Установите зависимости:
+   ```bash
+   npm install
+   ```
+3. Запустите сервер разработки:
+   ```bash
+   npm run dev
+   ```
+   Приложение будет доступно по адресу `http://localhost:5173` (или `3000` в Docker).
 
-## Expanding the ESLint configuration
+## 📂 Структура проекта
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+*   `src/api/` — Клиент для работы с backend API (`client.ts`) и TypeScript интерфейсы (`types.ts`).
+*   `src/components/` — Переиспользуемые UI компоненты (карточки рекомендаций, селекторы студентов, прогресс-бары).
+*   `src/context/` — Глобальное состояние (например, `AuthContext` для управления сессиями).
+*   `src/pages/` — Страницы приложения (Логин, Админ-панель, Просмотр учебных планов).
+*   `src/App.tsx` — Главный компонент, содержащий навигацию (Sidebar), роутинг и дашборд рекомендаций.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🌟 Основные фичи
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+*   **Умный Дашборд Студента:** Автоматическое разделение предметов на "Обязательные" и "Элективные группы". Подсветка академических задолженностей.
+*   **Safety First:** Использование React Error Boundaries и строгой типизации для предотвращения падений UI при неполных данных с бэкенда.
+*   **Интерфейс Администратора:** Инструменты для визуализации и редактирования графов зависимостей (пререквизитов) дисциплин в реальном времени.

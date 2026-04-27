@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RecommendedDiscipline } from '../api/types';
-import { BookOpen, CheckCircle2, Lock } from 'lucide-react';
+import { BookOpen, CheckCircle2, Lock, GitBranch } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   discipline: RecommendedDiscipline;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const RecommendationCard: React.FC<Props> = ({ discipline }) => {
+  const navigate = useNavigate();
   return (
     <div className={`light-card flex flex-col h-full gap-4 relative overflow-hidden group ${discipline.is_debt ? 'bg-red-50/50' : ''}`}>
       <div className="flex items-start justify-between">
@@ -34,7 +36,7 @@ export const RecommendationCard: React.FC<Props> = ({ discipline }) => {
       <div className="mt-auto pt-4 border-t border-[#E7E7E7] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex -space-x-1">
-             {[...Array(Math.min(3, discipline.prerequisite_count + 1))].map((_, i) => (
+             {[...Array(Math.min(3, (discipline.prerequisite_count || 0) + 1))].map((_, i) => (
                <div 
                 key={i} 
                 className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold ${
@@ -52,10 +54,19 @@ export const RecommendationCard: React.FC<Props> = ({ discipline }) => {
           </div>
         </div>
         
-        <button className="p-2 rounded bg-[#f5f5f5] hover:bg-[#e0e0e0] text-[#5C5C5C] transition-colors" title="Доступно для записи">
-           <Lock size={16} className="opacity-0 hidden" />
-           <CheckCircle2 size={16} className="text-[#2E7D32]" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => navigate(`/admin/disciplines/${discipline.id}/graph`)}
+            className="p-2 rounded bg-blue-50 hover:bg-blue-100 text-[#1846C7] transition-colors" 
+            title="Посмотреть граф связей"
+          >
+            <GitBranch size={16} />
+          </button>
+          <button className="p-2 rounded bg-[#f5f5f5] hover:bg-[#e0e0e0] text-[#5C5C5C] transition-colors" title="Доступно для записи">
+             <Lock size={16} className="opacity-0 hidden" />
+             <CheckCircle2 size={16} className="text-[#2E7D32]" />
+          </button>
+        </div>
       </div>
 
       {discipline.reason && (
