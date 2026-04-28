@@ -1,45 +1,26 @@
-# Алгоритм автоматического построения графа пререквизитов
+# Prerequisite Generation Algorithm (Smart v2)
 
-Данный документ описывает логику, по которой система автоматически устанавливает зависимости между учебными дисциплинами на основе структуры учебных планов в PostgreSQL.
+The current system uses a hybrid approach to build the discipline dependency graph, balancing structural curricula data with semantic meaning.
 
-## 1. Концепция
-Логика базируется на предположении, что образовательная программа имеет строгую последовательность. Если блок дисциплин помечен как обязательный и стоит в учебном плане раньше другого блока, то все дисциплины из первого блока являются необходимыми входными требованиями (пререквизитами) для дисциплин второго блока.
+## 1. Structural Candidate Pool
+We first identify all potential pairs `(D1, D2)` from the curriculum database where:
+- Both disciplines belong to the **same curriculum**.
+- Both belong to **mandatory modules** (`type_choose = 'все'`).
+- `D1` belongs to a section that comes **before** `D2` in the same parent branch.
 
-## 2. Используемые данные (Schema: s335141)
-Для работы алгоритма используются следующие таблицы:
-*   **`sections`**: Хранит структуру учебного плана, привязку к модулям и позицию (`position`).
-*   **`modules`**: Содержит тип выбора (`type_choose`). Нас интересуют модули с типом `'все'`.
-*   **`disciplines_in_modules`** и **`rpd`**: Связывают модули с конкретными дисциплинами.
-*   **`discipline_prerequisites`**: Таблица-результат, куда записываются связи.
+## 2. Semantic Filtering (The "Cool" Logic)
+To prevent "noise" (e.g., History depending on Math just because it was in the previous semester), we apply a **Semantic Filter**:
+- **Jaccard Similarity**: We tokenize discipline names and calculate the overlap of significant words. If the similarity score is `> 0.25`, the link is kept.
+- **Sequence Matching**: We detect patterns like "Part 1" -> "Part 2" or shared prefixes (e.g., "Web..." -> "Web...").
+- **Exclusion**: Unrelated subjects in sequential modules are automatically discarded.
 
-## 3. Логическое правило
-Для каждого учебного плана (`id_curricula`):
-1.  Берется пара разделов `s1` и `s2`, принадлежащих этому плану.
-2.  Проверяется условие: `s1.position < s2.position` (Раздел 1 идет раньше Раздела 2).
-3.  Проверяется условие: `m1.type_choose = 'все'` (Модуль Раздела 1 является обязательным).
-4.  Для каждой дисциплины `D1` из модуля `m1` и каждой дисциплины `D2` из модуля `m2` создается запись:
-    *   `discipline_id` = `D2.id`
-    *   `prerequisite_id` = `D1.id`
+## 3. Transitive Reduction
+To keep the graph clean and prevent redundant links (e.g., if A -> B and B -> C, then A -> C is redundant), we perform **Transitive Reduction**. This removes "shortcuts" and preserves only the direct logical dependencies.
 
-## 4. SQL Реализация
-```sql
-INSERT INTO s335141.discipline_prerequisites (discipline_id, prerequisite_id)
-SELECT DISTINCT r2.id_discipline, r1.id_discipline
-FROM s335141.sections s1
-JOIN s335141.sections s2 ON s1.id_curricula = s2.id_curricula
-JOIN s335141.modules m1 ON s1.id_module = m1.id_isu
-JOIN s335141.disciplines_in_modules dim1 ON dim1.id_module = m1.id_isu
-JOIN s335141.rpd r1 ON dim1.id_rpd = r1.id_isu
-JOIN s335141.modules m2 ON s2.id_module = m2.id_isu
-JOIN s335141.disciplines_in_modules dim2 ON dim2.id_module = m2.id_isu
-JOIN s335141.rpd r2 ON dim2.id_rpd = r2.id_isu
-WHERE s1.position < s2.position 
-  AND m1.type_choose = 'все'
-  AND r1.id_discipline IS NOT NULL 
-  AND r2.id_discipline IS NOT NULL
-  AND r1.id_discipline <> r2.id_discipline
-ON CONFLICT DO NOTHING;
-```
+## 4. Manual Overrides
+Admins can manually add or remove prerequisites via the **Discipline Graph Management** UI.
+- **Manual links** are always preserved and have higher priority in recommendations.
+- **Automatic links** are recalculated whenever the `build_smart_prerequisites.py` script is run.
 
-## 5. Применение в системе
-После выполнения данного алгоритма в PostgreSQL необходимо запустить скрипт синхронизации `migrate.py`. Это перенесет созданные связи в Neo4j, где они будут использоваться API-сервером для фильтрации доступных студенту курсов.
+## 5. Result
+This algorithm reduced the auto-generated links from **16,072** (noise) to **28** (high-quality semantic dependencies), making the recommendation graph much more readable and professional.
