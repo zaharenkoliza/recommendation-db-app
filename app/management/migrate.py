@@ -1,27 +1,33 @@
-import subprocess
-import json
-import sys
-from neo4j import GraphDatabase
+"""
+ETL: PostgreSQL → Neo4j
+Синхронизация данных из реляционной базы в графовую.
 
-def run_psql(query):
-    cmd = [
-        "docker", "exec", "itmo_db", "psql", "-U", "postgres", "-d", "itmo_db", "-A", "-t", "-q", "-c",
-        f"SELECT json_agg(t) FROM ({query}) t"
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
-    if result.returncode != 0:
-        return []
-    raw = "".join(result.stdout.splitlines()).strip()
-    if not raw: return []
-    try: return json.loads(raw)
-    except: return []
+Запуск внутри контейнера:
+    python -m app.management.migrate
+"""
+
+from neo4j import GraphDatabase
+from app.database import get_pg_conn, settings
+
+
+def run_query(query):
+    """Выполнить SQL-запрос и вернуть результат как список словарей."""
+    conn = get_pg_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT json_agg(t) FROM ({query}) t")
+            result = cur.fetchone()[0]
+            return result if result else []
+    finally:
+        conn.close()
+
 
 def migrate():
     print("Fetching data...")
-    programs = run_psql("SELECT id_isu as id, name, year FROM s335141.curricula")
-    tracks = run_psql("SELECT id, name, id_section FROM s335141.tracks")
-    modules = run_psql("SELECT id_isu as id, name, type_choose FROM s335141.modules")
-    disciplines = run_psql("""
+    programs = run_query("SELECT id_isu as id, name, year FROM s335141.curricula")
+    tracks = run_query("SELECT id, name, id_section FROM s335141.tracks")
+    modules = run_query("SELECT id_isu as id, name, type_choose FROM s335141.modules")
+    disciplines = run_query("""
         SELECT d.id, d.name, COALESCE(json_agg(DISTINCT ds.sem) FILTER (WHERE ds.sem IS NOT NULL), '[]') as semesters
         FROM s335141.disciplines d
         LEFT JOIN s335141.rpd r ON r.id_discipline = d.id
@@ -29,17 +35,16 @@ def migrate():
         LEFT JOIN s335141.discp_starts ds ON ds.id_discp_module = dim.id
         GROUP BY d.id, d.name
     """)
-    students = run_psql("SELECT id, name as full_name, group_id, curriculum_id FROM s335141.students")
-    
-    sections = run_psql("SELECT id, id_curricula, id_module FROM s335141.sections")
-    
-    # New tables
-    prereqs = run_psql("SELECT discipline_id, prerequisite_id, source FROM s335141.discipline_prerequisites")
-    progress = run_psql("SELECT student_id, discipline_id FROM s335141.student_performance WHERE status = 'Passed'")
-    debts = run_psql("SELECT student_id, discipline_id FROM s335141.student_performance WHERE status = 'Failed'")
+    students = run_query("SELECT id, name as full_name, group_id, curriculum_id FROM s335141.students")
+    sections = run_query("SELECT id, id_curricula, id_module FROM s335141.sections")
 
-    driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
-    
+    # Новые таблицы
+    prereqs = run_query("SELECT discipline_id, prerequisite_id, source FROM s335141.discipline_prerequisites")
+    progress = run_query("SELECT student_id, discipline_id FROM s335141.student_performance WHERE status = 'Passed'")
+    debts = run_query("SELECT student_id, discipline_id FROM s335141.student_performance WHERE status = 'Failed'")
+
+    driver = GraphDatabase.driver(settings.NEO4J_URI, auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD))
+
     def sync_data(tx):
         print("Syncing nodes...")
         tx.run("MATCH (n) DETACH DELETE n")
@@ -54,13 +59,13 @@ def migrate():
 
         print("Syncing basic relationships...")
         tx.run("UNWIND $data AS row MATCH (p:Program {id: row.id_curricula}), (m:Module {id: row.id_module}) MERGE (p)-[:CONTAINS_MODULE]->(m)", data=sections)
-        
-        track_to_module = run_psql("SELECT t.id as track_id, s.id_module FROM s335141.tracks t JOIN s335141.sections s ON t.id_section = s.id")
+
+        track_to_module = run_query("SELECT t.id as track_id, s.id_module FROM s335141.tracks t JOIN s335141.sections s ON t.id_section = s.id")
         tx.run("UNWIND $data AS row MATCH (t:Track {id: row.track_id}), (m:Module {id: row.id_module}) MERGE (t)-[:HAS_MODULE]->(m)", data=track_to_module)
 
-        disc_to_mod = run_psql("SELECT r.id_discipline, dim.id_module FROM s335141.rpd r JOIN s335141.disciplines_in_modules dim ON r.id_isu = dim.id_rpd")
+        disc_to_mod = run_query("SELECT r.id_discipline, dim.id_module FROM s335141.rpd r JOIN s335141.disciplines_in_modules dim ON r.id_isu = dim.id_rpd")
         tx.run("UNWIND $data AS row MATCH (d:Discipline {id: row.id_discipline}), (m:Module {id: row.id_module}) MERGE (d)-[:PART_OF]->(m)", data=disc_to_mod)
-        
+
         tx.run("MATCH (t:Track)-[:HAS_MODULE]->(m:Module)<-[:PART_OF]-(d:Discipline) MERGE (t)-[:INCLUDES]->(d)")
 
         print("Syncing prerequisites, progress and debts...")
@@ -79,6 +84,7 @@ def migrate():
 
     driver.close()
     print("Migration complete!")
+
 
 if __name__ == "__main__":
     migrate()

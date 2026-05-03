@@ -1295,7 +1295,7 @@ ALTER SEQUENCE s335141.discp_starts_id_seq OWNED BY s335141.discp_starts.id;
 --
 
 CREATE TABLE s335141.groups (
-    id integer NOT NULL
+    id varchar(20) NOT NULL
 );
 
 
@@ -1435,7 +1435,7 @@ ALTER TABLE s335141.specialties OWNER TO s335141;
 CREATE TABLE s335141.students (
     id integer NOT NULL,
     name character varying(100) NOT NULL,
-    group_id integer
+    group_id varchar(20)
 );
 
 
@@ -10422,3 +10422,45 @@ ALTER TABLE s335141.appuser ADD CONSTRAINT fk_appuser_student FOREIGN KEY (stude
 
 INSERT INTO s335141.appuser (id, login, password, role, student_id) VALUES (1, 'admin', 'admin', 'ADMIN', NULL);
 INSERT INTO s335141.appuser (id, login, password, role, student_id) VALUES (2, 'student', 'student', 'STUDENT', 1);
+
+-- Student status reference table
+CREATE TABLE s335141.student_status (
+    id serial PRIMARY KEY,
+    status_name varchar(50) NOT NULL
+);
+ALTER TABLE s335141.student_status OWNER TO s335141;
+
+INSERT INTO s335141.student_status (id, status_name) VALUES
+    (1, 'Активен'),
+    (2, 'Академический отпуск'),
+    (3, 'Отчислен'),
+    (4, 'Кандидат на отчисление');
+
+-- Extend students table with track, curriculum and status
+ALTER TABLE s335141.students ADD COLUMN IF NOT EXISTS track_id integer;
+ALTER TABLE s335141.students ADD COLUMN IF NOT EXISTS curriculum_id integer;
+ALTER TABLE s335141.students ADD COLUMN IF NOT EXISTS status_id integer DEFAULT 1;
+
+ALTER TABLE s335141.students ADD CONSTRAINT fk_students_track
+    FOREIGN KEY (track_id) REFERENCES s335141.tracks(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE s335141.students ADD CONSTRAINT fk_students_curriculum
+    FOREIGN KEY (curriculum_id) REFERENCES s335141.curricula(id_isu) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE s335141.students ADD CONSTRAINT fk_students_status
+    FOREIGN KEY (status_id) REFERENCES s335141.student_status(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+-- Add source column to discipline_prerequisites
+ALTER TABLE s335141.discipline_prerequisites ADD COLUMN IF NOT EXISTS source varchar(20) DEFAULT 'manual';
+
+-- Student performance tracking
+CREATE TABLE s335141.student_performance (
+    id serial PRIMARY KEY,
+    student_id integer NOT NULL,
+    discipline_id integer NOT NULL,
+    grade integer,
+    status varchar(20) NOT NULL DEFAULT 'Enrolled',
+    attempt_number integer DEFAULT 1,
+    updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_sp_student FOREIGN KEY (student_id) REFERENCES s335141.students(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_sp_discipline FOREIGN KEY (discipline_id) REFERENCES s335141.disciplines(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+ALTER TABLE s335141.student_performance OWNER TO s335141;

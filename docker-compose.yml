@@ -12,7 +12,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   neo4j:
     image: neo4j:5.12
@@ -28,7 +28,7 @@ services:
       - neo4j_data:/data
 
   backend:
-    build: .
+    build: ./app
     container_name: itmo_backend
     restart: always
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -36,7 +36,6 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/app/app
-      - .:/app
     environment:
       - DATABASE_URL=postgresql://postgres:rootpassword@db:5432/itmo_db
       - NEO4J_URI=bolt://neo4j:7687

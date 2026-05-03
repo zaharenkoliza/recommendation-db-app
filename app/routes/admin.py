@@ -2,11 +2,12 @@
 Роуты управления учебными планами (Конструктор ОП).
 Перенесено из PHP-бэкенда первого проекта.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
 from app.database import get_pg_conn
 from app.auth import require_admin, get_current_user
+from app.management.migrate import migrate
 
 router = APIRouter(tags=["admin"])
 
@@ -414,7 +415,7 @@ def get_discipline_graph(disc_id: int, user: dict = Depends(get_current_user)):
 # ══════════════════════════════════════════════════════════
 
 @router.post("/curricula", status_code=201)
-def create_curriculum(body: CurriculumCreate, user: dict = Depends(require_admin)):
+def create_curriculum(body: CurriculumCreate, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Создание нового учебного плана."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -424,6 +425,7 @@ def create_curriculum(body: CurriculumCreate, user: dict = Depends(require_admin
             (body.id_isu, body.name, body.year, body.degree, body.head)
         )
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"id_isu": body.id_isu, "name": body.name, "year": body.year, "degree": body.degree, "head": body.head}
     except Exception as e:
         conn.rollback()
@@ -433,7 +435,7 @@ def create_curriculum(body: CurriculumCreate, user: dict = Depends(require_admin
 
 
 @router.put("/curricula/{id_isu}")
-def update_curriculum(id_isu: int, body: CurriculumUpdate, user: dict = Depends(require_admin)):
+def update_curriculum(id_isu: int, body: CurriculumUpdate, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Обновление учебного плана."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -457,6 +459,7 @@ def update_curriculum(id_isu: int, body: CurriculumUpdate, user: dict = Depends(
         if not row:
             raise HTTPException(status_code=404, detail="Учебный план не найден")
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"id_isu": row[0], "name": row[1], "year": row[2], "degree": row[3], "head": row[4]}
     except HTTPException:
         raise
@@ -468,7 +471,7 @@ def update_curriculum(id_isu: int, body: CurriculumUpdate, user: dict = Depends(
 
 
 @router.delete("/curricula/{id_isu}")
-def delete_curriculum(id_isu: int, user: dict = Depends(require_admin)):
+def delete_curriculum(id_isu: int, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Удаление учебного плана."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -480,6 +483,7 @@ def delete_curriculum(id_isu: int, user: dict = Depends(require_admin)):
         if not row:
             raise HTTPException(status_code=404, detail="Учебный план не найден")
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"deleted": True, "id_isu": id_isu}
     except HTTPException:
         raise
@@ -495,7 +499,7 @@ def delete_curriculum(id_isu: int, user: dict = Depends(require_admin)):
 # ══════════════════════════════════════════════════════════
 
 @router.post("/tracks", status_code=201)
-def create_track(body: TrackCreate, user: dict = Depends(require_admin)):
+def create_track(body: TrackCreate, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Создание нового трека."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -506,6 +510,7 @@ def create_track(body: TrackCreate, user: dict = Depends(require_admin)):
         )
         new_id = cur.fetchone()[0]
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"id": new_id, "name": body.name, "number": body.number, "id_section": body.id_section, "count_limit": body.count_limit}
     except Exception as e:
         conn.rollback()
@@ -515,7 +520,7 @@ def create_track(body: TrackCreate, user: dict = Depends(require_admin)):
 
 
 @router.put("/tracks/{track_id}/edit")
-def update_track(track_id: int, body: TrackUpdate, user: dict = Depends(require_admin)):
+def update_track(track_id: int, body: TrackUpdate, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Обновление трека."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -538,6 +543,7 @@ def update_track(track_id: int, body: TrackUpdate, user: dict = Depends(require_
         if not row:
             raise HTTPException(status_code=404, detail="Трек не найден")
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"id": row[0], "name": row[1], "number": row[2], "count_limit": row[3]}
     except HTTPException:
         raise
@@ -549,7 +555,7 @@ def update_track(track_id: int, body: TrackUpdate, user: dict = Depends(require_
 
 
 @router.delete("/tracks/{track_id}")
-def delete_track(track_id: int, user: dict = Depends(require_admin)):
+def delete_track(track_id: int, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Удаление трека."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -559,6 +565,7 @@ def delete_track(track_id: int, user: dict = Depends(require_admin)):
         if not row:
             raise HTTPException(status_code=404, detail="Трек не найден")
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"deleted": True, "id": track_id}
     except HTTPException:
         raise
@@ -574,7 +581,7 @@ def delete_track(track_id: int, user: dict = Depends(require_admin)):
 # ══════════════════════════════════════════════════════════
 
 @router.put("/disciplines/{disc_id}")
-def update_discipline(disc_id: int, body: DisciplineUpdate, user: dict = Depends(require_admin)):
+def update_discipline(disc_id: int, body: DisciplineUpdate, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Обновление дисциплины."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -597,6 +604,7 @@ def update_discipline(disc_id: int, body: DisciplineUpdate, user: dict = Depends
         if not row:
             raise HTTPException(status_code=404, detail="Дисциплина не найдена")
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"id": row[0], "name": row[1], "comment": row[2]}
     except HTTPException:
         raise
@@ -611,7 +619,7 @@ def update_discipline(disc_id: int, body: DisciplineUpdate, user: dict = Depends
 # ══════════════════════════════════════════════════════════
 
 @router.post("/prerequisites", status_code=201)
-def add_prerequisite(body: PrerequisiteRequest, user: dict = Depends(require_admin)):
+def add_prerequisite(body: PrerequisiteRequest, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Добавление ручного пререквизита."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -621,12 +629,13 @@ def add_prerequisite(body: PrerequisiteRequest, user: dict = Depends(require_adm
             (body.discipline_id, body.prerequisite_id)
         )
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"status": "ok"}
     finally:
         conn.close()
 
 @router.delete("/prerequisites")
-def delete_prerequisite(discipline_id: int, prerequisite_id: int, user: dict = Depends(require_admin)):
+def delete_prerequisite(discipline_id: int, prerequisite_id: int, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Удаление пререквизита."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -636,6 +645,7 @@ def delete_prerequisite(discipline_id: int, prerequisite_id: int, user: dict = D
             (discipline_id, prerequisite_id)
         )
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"status": "ok"}
     finally:
         conn.close()
@@ -646,7 +656,7 @@ def delete_prerequisite(discipline_id: int, prerequisite_id: int, user: dict = D
 # ══════════════════════════════════════════════════════════
 
 @router.post("/import-curriculum", status_code=201)
-def import_curriculum(body: CurriculumImport, user: dict = Depends(require_admin)):
+def import_curriculum(body: CurriculumImport, background_tasks: BackgroundTasks, user: dict = Depends(require_admin)):
     """Комплексный импорт учебного плана со всей структурой."""
     conn = get_pg_conn()
     cur = conn.cursor()
@@ -714,6 +724,7 @@ def import_curriculum(body: CurriculumImport, user: dict = Depends(require_admin
             process_section(section)
 
         conn.commit()
+        background_tasks.add_task(migrate)
         return {"status": "Curriculum imported successfully", "id_isu": body.id_isu}
     except Exception as e:
         conn.rollback()
