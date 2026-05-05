@@ -31,7 +31,7 @@ SHOWCASE_SQL = [
     "INSERT INTO s335141.groups (id) VALUES ('M3101') ON CONFLICT DO NOTHING",
 
     # === Учебный план ===
-    "INSERT INTO s335141.curricula (id_isu, name, year, degree, head) VALUES (999, 'Искусственный интеллект и машинное обучение', 2025, 'bachelor', 'Захаренко Е.А.') ON CONFLICT (id_isu) DO UPDATE SET name = EXCLUDED.name, year = 2025",
+    "INSERT INTO s335141.curricula (id_isu, name, year, degree, head) VALUES (999, 'Искусственный интеллект и машинное обучение', 2023, 'bachelor', 'Захаренко Е.А.') ON CONFLICT (id_isu) DO UPDATE SET name = EXCLUDED.name, year = 2023",
 
     # === Модули ===
     "INSERT INTO s335141.modules (id_isu, name, type_choose) VALUES (999, 'Специализация AI (Обязательно)', 'все') ON CONFLICT (id_isu) DO NOTHING",
@@ -52,6 +52,10 @@ SHOWCASE_SQL = [
     "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (99994, 1, 999, 52372, 4, false) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
     "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (99995, 1, 999, 32911, 5, false) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
     "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (99996, 1, 999, 16583, 6, false) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
+    "INSERT INTO s335141.rpd (id_isu, id_discipline, name, status) VALUES (99997, 6142, 'Функциональное программирование', 'новая') ON CONFLICT (id_isu) DO NOTHING",
+    "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (99997, 1, 999, 99997, 7, false) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
+    "INSERT INTO s335141.rpd (id_isu, id_discipline, name, status) VALUES (99998, 6138, 'Разработка приложений виртуальной реальности', 'новая') ON CONFLICT (id_isu) DO NOTHING",
+    "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (99998, 1, 999, 99998, 8, false) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
 
     # === Дисциплины в модулях (элективы) ===
     "INSERT INTO s335141.rpd (id_isu, id_discipline, name, status) VALUES (10001, 5910, 'Коммуникации и командообразование', 'новая') ON CONFLICT (id_isu) DO NOTHING",
@@ -60,18 +64,26 @@ SHOWCASE_SQL = [
     "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (10002, 1, 1000, 10002, 2, true) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
     "INSERT INTO s335141.rpd (id_isu, id_discipline, name, status) VALUES (10003, 5913, 'Информатика (базовый уровень)', 'новая') ON CONFLICT (id_isu) DO NOTHING",
     "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (10003, 1, 1000, 10003, 3, true) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
+    "INSERT INTO s335141.rpd (id_isu, id_discipline, name, status) VALUES (10004, 6162, 'Основы работы с 3D-анимацией', 'новая') ON CONFLICT (id_isu) DO NOTHING",
+    "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (10004, 1, 1000, 10004, 4, true) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
+    "INSERT INTO s335141.rpd (id_isu, id_discipline, name, status) VALUES (10005, 6158, 'Основы работы с VFX', 'новая') ON CONFLICT (id_isu) DO NOTHING",
+    "INSERT INTO s335141.disciplines_in_modules (id, implementer, id_module, id_rpd, position, changable) VALUES (10005, 1, 1000, 10005, 5, true) ON CONFLICT ON CONSTRAINT uk_rpd_module DO NOTHING",
 
     # === Семестры ===
-    "DELETE FROM s335141.discp_starts WHERE id_discp_module IN (99991, 99992, 99993, 99994, 99995, 99996, 10001, 10002, 10003)",
+    "DELETE FROM s335141.discp_starts WHERE id_discp_module IN (99991, 99992, 99993, 99994, 99995, 99996, 99997, 99998, 10001, 10002, 10003, 10004, 10005)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99991, 1)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99992, 1)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99993, 1)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99994, 2)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99995, 3)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99996, 3)",
+    "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99997, 7)",
+    "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (99998, 7)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (10001, 3)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (10002, 3)",
     "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (10003, 3)",
+    "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (10004, 7)",
+    "INSERT INTO s335141.discp_starts (id_discp_module, sem) VALUES (10005, 7)",
 
     # === Главный демо-студент ===
     "INSERT INTO s335141.students (id, name, group_id, track_id, curriculum_id, status_id) VALUES (335200, 'Максим Соколов (Пример)', 'P3321', 10, 999, 1) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, track_id = EXCLUDED.track_id, curriculum_id = EXCLUDED.curriculum_id",
@@ -86,10 +98,16 @@ SHOWCASE_SQL = [
     "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status) VALUES (335200, 6196, 5, 'Passed')",
     "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status) VALUES (335200, 6383, 4, 'Passed')",
     "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status, attempt_number) VALUES (335200, 6150, 2, 'Failed', 1)",
+    "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status, attempt_number) VALUES (335200, 6150, 4, 'Passed', 2)",
+    "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status) VALUES (335200, 6132, 5, 'Passed')",
+    "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status) VALUES (335200, 6230, 5, 'Passed')",
+    "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status) VALUES (335200, 5910, 5, 'Passed')",
+    "INSERT INTO s335141.student_performance (student_id, discipline_id, grade, status) VALUES (335200, 5913, 5, 'Passed')",
 
     # === Пререквизиты ===
-    "DELETE FROM s335141.discipline_prerequisites WHERE discipline_id IN (6132, 6230)",
+    "DELETE FROM s335141.discipline_prerequisites WHERE discipline_id IN (6132, 6230, 6142)",
     "INSERT INTO s335141.discipline_prerequisites (discipline_id, prerequisite_id, source) VALUES (6132, 6196, 'manual')",
+    "INSERT INTO s335141.discipline_prerequisites (discipline_id, prerequisite_id, source) VALUES (6142, 5913, 'manual')",
 
     # === Дополнительные персоны ===
     "INSERT INTO s335141.students (id, name, group_id, track_id, status_id) VALUES (335141, 'Алексей Иванов (AI)', 'P3321', 10, 1) ON CONFLICT (id) DO UPDATE SET status_id = 1",

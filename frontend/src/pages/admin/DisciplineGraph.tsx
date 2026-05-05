@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, Loader2, AlertCircle, Info } from 'lucide-react';
 
 /**
@@ -52,6 +53,7 @@ const Arrow = ({ x1, y1, x2, y2, label }: { x1: number; y1: number; x2: number; 
 export const DisciplineGraph = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [disciplineName, setDisciplineName] = useState('');
@@ -317,7 +319,7 @@ export const DisciplineGraph = () => {
       )}
 
       {/* Admin Management Panel */}
-      {!loading && !error && (
+      {!loading && !error && isAdmin && (
         <div className="mt-8 light-card p-6">
           <h3 className="text-lg font-black text-[#1F1F1F] mb-4 flex items-center gap-2">
             <div className="w-1.5 h-6 bg-[#1846C7] rounded-full" />
